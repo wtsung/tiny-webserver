@@ -2,9 +2,9 @@ CXX = g++
 CFLAGS = -std=c++14 -O2 -Wall -g 
 
 TARGET = server
-OBJS = ../code/log/*.cpp ../code/pool/*.cpp ../code/timer/*.cpp \
-       ../code/http/*.cpp ../code/server/*.cpp \
-       ../code/buffer/*.cpp ../code/main.cpp
+OBJS = ../src/Log/*.cpp ../src/SqlConnPool/*.cpp ../src/Timer/*.cpp \
+       ../src/Http/*.cpp ../src/WebServer/*.cpp \
+       ../src/Buffer/*.cpp ../src/main.cpp
 
 all: $(OBJS)
 	$(CXX) $(CFLAGS) $(OBJS) -o ../bin/$(TARGET)  -pthread -lmysqlclient
