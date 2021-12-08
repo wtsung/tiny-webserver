@@ -15,7 +15,7 @@ public:
     ~HttpConn();
 
     void init(int sockfd, const sockaddr_in& addr);
-    void close();
+    void close_conn();
 
     int get_fd() const;
     int get_port() const;
@@ -30,6 +30,10 @@ public:
     int write_bytes();
     
     bool is_keepalive() const;
+
+    static bool _trig_ET;
+    static std::string _root_dir;
+    static std::atomic<int> _user_count;
     
 private:
     
@@ -44,9 +48,7 @@ private:
     std::unique_ptr<Buffer> _read_buff;
     std::unique_ptr<Buffer> _write_buff;
 
-    static bool _trig_ET;
-    static std::string _root_dir;
-    static std::atomic<int> _user_count;
+
 
     std::unique_ptr<HttpRequest> _request;
     std::unique_ptr<HttpResponse> _response;

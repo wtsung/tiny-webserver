@@ -117,7 +117,7 @@ void WebServer::_deal_listen() {
             return;
         }
         _add_client(fd, addr);
-    } while (_listen_event & EPOLLET)
+    } while (_listen_event & EPOLLET);
 }
 
 void WebServer::_deal_read(HttpConn* client) {
@@ -144,7 +144,7 @@ void WebServer::_send_error(int fd, const char* info) {
 void WebServer::_extent_time(HttpConn* client) {
     assert(client != nullptr);
     if (_timeout_ms > 0) {
-        _timer->adjust_timer(client->get_fd(), _timeout_ms);
+        _timer->adjust_timer(client, _timeout_ms);
     }
 }
 
@@ -152,14 +152,14 @@ void WebServer::_close_conn(HttpConn* client) {
     assert(client != nullptr);
     LOG_INFO("Client[%d] quit!", client->get_fd());
     _epoller->del_fd(client->get_fd());
-    client->close();
+    client->close_conn();
 }
 
 bool WebServer::_init_socket() {
     int ret;
     struct sockaddr_in addr;
     if (_port > 65535 || _port < 1024) {
-        LOG_ERROR("Port:%d error!",  port_);
+        LOG_ERROR("Port:%d error!",  _port);
         return false;
     }
     addr.sin_family = AF_INET;
@@ -173,7 +173,7 @@ bool WebServer::_init_socket() {
     }
     _listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (_listenfd < 0) {
-        LOG_ERROR("Create socket error!", port_);
+        LOG_ERROR("Create socket error!", _port);
         return false;       
     }
     /* 设置优雅关闭 */
@@ -196,14 +196,14 @@ bool WebServer::_init_socket() {
     ret = bind(_listenfd, (struct sockaddr*)&addr, sizeof(addr));
     if (ret < 0) {
         close(_listenfd);
-        LOG_ERROR("Bind Port:%d error!", port_);
+        LOG_ERROR("Bind Port:%d error!", _port);
         return false;
     }
 
     ret = listen(_listenfd, 6);
     if (ret < 0) {
         close(_listenfd);
-        LOG_ERROR("Listen port:%d error!", port_);
+        LOG_ERROR("Listen port:%d error!", _port);
         return false;
     }
 
@@ -215,7 +215,7 @@ bool WebServer::_init_socket() {
     }
     //设置为非阻塞
     _set_fd_nonblock(_listenfd);
-    LOG_INFO("Server port:%d", port_);
+    LOG_INFO("Server port:%d", _port);
     return true;
 }
 

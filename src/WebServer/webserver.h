@@ -13,7 +13,7 @@
 
 class WebServer {
 public:
-    WebServer(int port, int trig_mode, int timeout_ms, int opt_linger
+    WebServer(int port, int trig_mode, int timeout_ms, int opt_linger,
               std::string user, std::string password, std::string database_name, int sqlport, 
               int close_log, int sql_num, int thread_num, int log_que_size);
     ~WebServer();

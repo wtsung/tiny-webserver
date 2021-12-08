@@ -21,12 +21,12 @@ void HttpConn::init(int sockfd, const sockaddr_in& addr) {
     LOG_INFO("Client[%d](%s:%d) in, UserCount: %d", _sockfd, this->get_ip(), this->get_port(), (int)_user_count);
 }
 
-void HttpConn::close() {
+void HttpConn::close_conn() {
     _response->unmap_file();
     if (_close == false) {
         _close = true;
         _user_count--;
-        close(_sockfd);////
+        close(_sockfd);
         LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", _sockfd, get_ip(), get_port(), (int)_user_count);
     }
 }
@@ -93,7 +93,7 @@ bool HttpConn::process() {
         return false;
     }
     else if (_request->parse(*_read_buff.get())) {
-        LOG_DEBUG("%s", _request.path().c_str());
+        LOG_DEBUG("%s", _request->path().c_str());
         _response->init(_root_dir, _request->path(), this->is_keepalive(), 200);
     }
     else {
@@ -111,7 +111,7 @@ bool HttpConn::process() {
         _iov[1].iov_len = _response->file_len();
         _iov_count = 2;
     }
-    LOG_DEBUG("filesize:%d, %d  to %d", _response.file_len() , _iov_count, write_bytes());////
+    LOG_DEBUG("filesize:%d, %d  to %d", _response->file_len() , _iov_count, write_bytes());////
     return true;
 }
 

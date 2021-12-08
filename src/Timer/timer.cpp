@@ -1,62 +1,65 @@
 #include "timer.h"
 
-void time_heap::add_timer(heap_timer* timer) {
-    if (timer == nullptr) {
-        return;
+void time_heap::add_timer(int fd, int timeout, const std::function<void()>& cb) {
+    assert(fd > 0);
+    size_t i;
+    if (_map.count(fd)) {
+        i = _heap.size();
+        _map[fd] = i;
+        struct heap_timer temp;
+        temp.fd = fd;
+        temp.expire = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout);
+        temp.cb_func = cb;
+        _heap.push_back(temp);
+        _siftup(i);
     }
-    std::shared_ptr<heap_timer> sp_timer;
-    sp_timer.reset(timer);
-    _heap.push_back(sp_timer);
-    _siftup(_heap.size() - 1);
-}
-
-void time_heap::del_timer(heap_timer* timer) {
-    assert(!_heap.empty() && timer != nullptr);
-    timer->cb_func = nullptr;
-    _map.erase(timer);
-}
-
-void time_heap::adjust_timer(heap_timer* timer, int timeout) {
-    assert(!_heap.empty() && _map.count(timer) > 0);
-    int idx = _map[timer];
-    _heap[_map[timer]]->expire = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout);
-    _siftdown(_map[timer]);
-}
-
-heap_timer* time_heap::top() const {
-    if (this->empty()) {
-        return nullptr;
+    else {
+        i = _map[fd];
+        _heap[i].expire = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout);
+        _heap[i].cb_func = cb;
+        if (!_siftdown(i, _heap.size())) {
+            _siftup(i);
+        }
     }
-    return _heap[0].get();
+}
+
+void time_heap::del_timer(size_t index) {
+    assert(!_heap.empty() && index >= 0 && index < _heap.size());
+    size_t i = index;
+    size_t n = _heap.size() - 1;
+    assert(i <= n);
+    if (i < n) {
+        _swap(i, n);
+        if (!_siftdown(i, n)) {
+            _siftup(i);
+        }
+    }
+    _map.erase(_heap.back().fd);
+    _heap.pop_back();
+}
+
+void time_heap::adjust_timer(int fd, int timeout) {
+    assert(!_heap.empty() && _map.count(fd) > 0);
+    _heap[_map[fd]].expire = std::chrono::system_clock::now() + std::chrono::milliseconds(timeout);
+    _siftdown(_map[fd], _heap.size());
 }
 
 void time_heap::pop() {
-    if (this->empty()) {
-        return;
-    }
-    if (_heap[0].get()) {
-        _map.erase(_heap[0].get());
-        _heap[0] = _heap.back();
-        _map[_heap[0].get()] = 0;
-        _heap.pop_back();
-        _siftdown(0);
-    }
+    assert(!this->empty());
+    this->del_timer(0);
 }
 
 void time_heap::tick() {
-    assert(!this->empty());
-    std::unique_ptr<heap_timer> tmp;
-    auto cur = std::chrono::system_clock::now();
-    tmp.reset(this->top());
+    if (this->empty()) {
+        return;
+    }
     while (!this->empty()) {
-        if (tmp->expire > cur) {
-            break;
+        heap_timer temp = _heap.front();
+        if(std::chrono::duration_cast<std::chrono::milliseconds>(temp.expire - std::chrono::system_clock::now()).count() > 0) { 
+            break; 
         }
-        if (tmp->cb_func) {
-            tmp->cb_func();
-        }
+        temp.cb_func();
         this->pop();
-        tmp.reset(this->top());
     }
 }
 
@@ -64,7 +67,7 @@ int time_heap::get_next_tick() {
     tick();
     size_t res = -1;
     if (!_heap.empty()) {
-        res = std::chrono::duration_cast<std::chrono::milliseconds>(_heap.front()->expire - std::chrono::system_clock::now()).count();
+        res = std::chrono::duration_cast<std::chrono::milliseconds>(_heap.front().expire - std::chrono::system_clock::now()).count();
         if (res < 0) {
             res = 0;
         }
@@ -82,35 +85,27 @@ void time_heap::clear() {
     _map.clear();
 }
 
-void time_heap::_siftdown (int hole) {
-    assert(hole >= 0 && hole < _heap.size());
-    std::unique_ptr<heap_timer> temp;
-    temp.reset(_heap[hole].get());
-    int idx = hole;
-    int child = 0;
-    for (;(idx * 2 + 1) <= _heap.size() - 1; idx = child) {
-        child = idx * 2 + 1;
-        if ((child < (_heap.size() - 1)) && (_heap[child + 1]->expire < _heap[child]->expire)) {
+bool time_heap::_siftdown (size_t idx, size_t n) {
+    assert(idx >= 0 && idx < _heap.size());
+    assert(n >= 0 && n < _heap.size());
+    int i = idx;
+    int child = i * 2 + 1;
+    while (child < n) {
+        if (child + 1 < n && _heap[child + 1] < _heap[child]) {
             child++;
         }
-        if (_heap[child]->expire < _heap[idx]->expire) {
-            _heap[idx] = _heap[child];
-            _map[_heap[child].get()] = idx;
-        }
-        else {
-            break;
-        }
+        _swap(i, child);
+        i = child;
+        child = i * 2 + 1;
     }
-    _heap[idx].reset(temp.get());
-    _map[temp.get()] = idx;
+    return i > idx;
 }
 
-void time_heap::_siftup(int hole) {
-    assert(hole >= 0 && hole < _heap.size());
-    int idx = hole;
+void time_heap::_siftup(size_t idx) {
+    assert(idx >= 0 && idx < _heap.size());
     int parent = (idx - 1) / 2;
     while (parent >= 0) {
-        if (_heap[parent]->expire < _heap[idx]->expire) {
+        if (_heap[parent].expire < _heap[idx].expire) {
             break;
         }
         _swap(parent, idx);
@@ -119,10 +114,10 @@ void time_heap::_siftup(int hole) {
     }
 }
 
-void time_heap::_swap (int lhs, int rhs) {
+void time_heap::_swap (size_t lhs, size_t rhs) {
     assert(lhs >= 0 && lhs < _heap.size());
     assert(rhs >= 0 && rhs < _heap.size());
     std::swap(_heap[lhs],_heap[rhs]);
-    _map[_heap[lhs].get()] = lhs;
-    _map[_heap[rhs].get()] = rhs;
+    _map[_heap[lhs].fd] = lhs;
+    _map[_heap[rhs].fd] = rhs;
 }
