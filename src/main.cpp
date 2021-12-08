@@ -1,4 +1,4 @@
-#include "../WebServer/webserver.h"
+#include "WebServer/webserver.h"
 
 int main() {
     WebServer server(1316, 3, 60000, false, //端口，ET，timeout，优雅关闭

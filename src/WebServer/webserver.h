@@ -12,6 +12,7 @@
 #include "../Http/httpconn.h"
 
 class WebServer {
+public:
     WebServer(int port, int trig_mode, int timeout_ms, int opt_linger
               std::string user, std::string password, std::string database_name, int sqlport, 
               int close_log, int sql_num, int thread_num, int log_que_size);
@@ -20,7 +21,7 @@ class WebServer {
     void start();
 
 private:
-    bool _init_socket(;
+    bool _init_socket();
     void _init_event_mode(int trig_mode);
     void _add_client(int fd, sockaddr_in addr);
 

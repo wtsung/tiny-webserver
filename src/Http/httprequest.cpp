@@ -287,14 +287,14 @@ std::string HttpRequest::version() const {
 std::string HttpRequest::get_post(const std::string& key) const {
     assert(key != "");
     if (_post.count(key)) {
-        return _post[key];
+        return _post.find(key)->second;
     }
     return "";
 }
 std::string HttpRequest::get_post(const char* key) const {
     assert(key != "");
     if (_post.count(key)) {
-        return _post[key];
+        return _post.find(key)->second;
     }
     return "";
 }

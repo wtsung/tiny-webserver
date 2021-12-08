@@ -3,10 +3,13 @@
 
 #include "blockqueue.h"
 #include <string>
+#include <cstring>
 #include <thread>
+#include <stdarg.h> 
 #include <mutex>
 #include <memory>
 #include <ctime>
+#include <cassert>
 #include <sys/time.h>
 
 class Log {

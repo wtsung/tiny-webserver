@@ -26,8 +26,8 @@ void HttpConn::close() {
     if (_close == false) {
         _close = true;
         _user_count--;
-        close(_sockfd);
-        LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", fd_, GetIP(), GetPort(), (int)userCount);
+        close(_sockfd);////
+        LOG_INFO("Client[%d](%s:%d) quit, UserCount:%d", _sockfd, get_ip(), get_port(), (int)_user_count);
     }
 }
 
@@ -83,7 +83,7 @@ ssize_t HttpConn::write(int* save_errno) {
             _iov[0].iov_len -= len;
             _write_buff->retrieve(len);
         }
-    } while (_trig_ET || this->write_bytes() > 10240)
+    } while (_trig_ET || this->write_bytes() > 10240);
     return len;
 }
 
@@ -92,14 +92,14 @@ bool HttpConn::process() {
     if (_read_buff->readable_bytes() <= 0) {
         return false;
     }
-    else if (_request->parse(_read_buff)) {
-        LOG_DEBUG("%s", request_.path().c_str());
+    else if (_request->parse(*_read_buff.get())) {
+        LOG_DEBUG("%s", _request.path().c_str());
         _response->init(_root_dir, _request->path(), this->is_keepalive(), 200);
     }
     else {
         _response->init(_root_dir, _request->path(), false, 400);
     }
-    _response->make_response(_write_buff);
+    _response->make_response(*_write_buff.get());
     //响应头，在buff中
     _iov[0].iov_base = const_cast<char*> (_write_buff->peek());
     _iov[0].iov_len = _write_buff->readable_bytes();
@@ -111,7 +111,7 @@ bool HttpConn::process() {
         _iov[1].iov_len = _response->file_len();
         _iov_count = 2;
     }
-    LOG_DEBUG("filesize:%d, %d  to %d", response_.FileLen() , iovCnt_, ToWriteBytes());
+    LOG_DEBUG("filesize:%d, %d  to %d", _response.file_len() , _iov_count, write_bytes());////
     return true;
 }
 

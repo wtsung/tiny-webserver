@@ -28,13 +28,11 @@ bool Epoller::mod_fd(int fd, uint32_t events) {
     return 0 == epoll_ctl(_epollfd, EPOLL_CTL_MOD, fd, &ev);
 }
 
-bool Epoller::del_fd(int fd, uint32_t events) {
+bool Epoller::del_fd(int fd) {
     if (fd < 0) {
         return false;
     }
     epoll_event ev = {0};
-    ev.data.fd = fd;
-    ev.events = events;
     return 0 == epoll_ctl(_epollfd, EPOLL_CTL_DEL, fd, &ev);
 }
 

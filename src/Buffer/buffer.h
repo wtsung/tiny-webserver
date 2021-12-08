@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <sys/uio.h>
-
+#include <string.h>
 class Buffer {
 public:
     Buffer(int size = 1024);

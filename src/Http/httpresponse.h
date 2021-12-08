@@ -11,6 +11,7 @@
 #include "../Log/log.h"
 
 class HttpResponse {
+public:
     HttpResponse();
     ~HttpResponse();
 

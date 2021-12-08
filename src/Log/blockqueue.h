@@ -4,6 +4,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <deque>
+#include <cassert>
 
 template <typename T>
 class BlockQueue {

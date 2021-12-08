@@ -6,6 +6,8 @@
 #include <mysql/mysql.h>
 #include <semaphore.h>
 #include <string>
+#include <cassert> 
+#include "../Log/log.h"
 class SqlConnPool {
 public:
     MYSQL* GetConn();

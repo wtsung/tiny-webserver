@@ -8,6 +8,7 @@
 #include <vector>
 #include <unordered_map>
 #include <chrono>
+#include <cassert>
 #define BUFFER_SIZE 64
 
 class heap_timer;
