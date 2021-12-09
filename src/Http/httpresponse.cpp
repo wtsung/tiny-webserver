@@ -22,17 +22,17 @@ const std::unordered_map<std::string, std::string> HttpResponse::_suffix_type {
     { ".js",    "text/javascript "}
 };
 
-const std::unordered_map<int, std::string> _code_status {
-    { 200, "OK" },
-    { 400, "Bad Request" },
-    { 403, "Forbidden" },
-    { 404, "Not Found" },
+const std::unordered_map<int, std::string> HttpResponse::_code_status { 
+    { 200, "OK" }, 
+    { 400, "Bad Request" }, 
+    { 403, "Forbidden" }, 
+    { 404, "Not Found" } 
 }; 
 
-const std::unordered_map<int, std::string> _code_path {
-    { 400, "/400.html" },
-    { 403, "/403.html" },
-    { 404, "/404.html" },
+const std::unordered_map<int, std::string> HttpResponse::_code_path { 
+    { 400, "/400.html" }, 
+    { 403, "/403.html" }, 
+    { 404, "/404.html" } 
 };
 
 HttpResponse::HttpResponse() {

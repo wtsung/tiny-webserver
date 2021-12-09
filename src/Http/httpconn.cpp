@@ -1,5 +1,9 @@
 #include "httpconn.h"
 
+bool HttpConn::_trig_ET;
+std::string HttpConn::_root_dir;
+std::atomic<int> HttpConn::_user_count;
+
 HttpConn::HttpConn() {
     _sockfd = -1;
     bzero(&_addr, sizeof(_addr));
