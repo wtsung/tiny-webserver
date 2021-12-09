@@ -7,7 +7,7 @@ HttpConn::HttpConn() {
 }
 
 HttpConn::~HttpConn() {
-    close();
+    close_conn();
 }
 
 void HttpConn::init(int sockfd, const sockaddr_in& addr) {

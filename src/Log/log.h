@@ -19,7 +19,7 @@ public:
         static Log instance;
         return &instance;
     }
-    void flush_log_thread();
+    static void flush_log_thread();
 
     void write_log(int level, const char* format, ...);
     

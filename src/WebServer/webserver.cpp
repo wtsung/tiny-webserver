@@ -3,15 +3,15 @@
 WebServer::WebServer(int port, int trig_mode, int timeout_ms, int opt_linger, 
               std::string user, std::string password, std::string database_name, int sqlport, 
               int close_log, int sql_num, int thread_num, int log_que_size) : 
-              _port(port), _opt_linger(opt_linger), _timeout_ms(timeout_ms), _is_close(false), _close_log(close_log)
-              _timer(new heap_timer()), _threadpool(new ThreadPool(thread_num)), _epoller(new Epoller())
+              _port(port), _opt_linger(opt_linger), _timeout_ms(timeout_ms), _is_close(false), _close_log(close_log), 
+              _timer(new time_heap()), _threadpool(new ThreadPool(thread_num)), _epoller(new Epoller())
               {
                   _root_dir = getcwd(nullptr, 256);
                   assert(_root_dir);
                   strncat(_root_dir, "/resourse/", 16);
                   HttpConn::_user_count = 0;
                   HttpConn::_root_dir = _root_dir;
-                  SqlConnPool::GetInstance()->Init("localhost", sqlport, user, password, database_name, sql_num);
+                  SqlConnPool::GetInstance()->Init("localhost", user, password, database_name, sqlport, sql_num, close_log);
 
                   _init_event_mode(trig_mode);
                   if (!_init_socket()) {
@@ -144,7 +144,7 @@ void WebServer::_send_error(int fd, const char* info) {
 void WebServer::_extent_time(HttpConn* client) {
     assert(client != nullptr);
     if (_timeout_ms > 0) {
-        _timer->adjust_timer(client, _timeout_ms);
+        _timer->adjust_timer(client->get_fd(), _timeout_ms);
     }
 }
 
