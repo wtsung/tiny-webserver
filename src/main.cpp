@@ -6,4 +6,4 @@ int main() {
                      false, 12, 6, 1024); //日志, sql连接数，线程数，日志队列长度
     server.start();
     return 0;
-}:
+}
