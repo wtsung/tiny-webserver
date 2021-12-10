@@ -23,7 +23,7 @@ Log::~Log() {
     }
 }
 
-bool Log::init(const char* file_name, int split_lines, int max_queue_size) {
+void Log::init(const char* file_name, int split_lines, int max_queue_size) {
        if (max_queue_size > 0) {
            _isAsync = true;//异步
            if (!_deque) {
