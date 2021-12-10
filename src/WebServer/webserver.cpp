@@ -1,6 +1,6 @@
 #include "webserver.h"
 
-WebServer::WebServer(int port, int trig_mode, int timeout_ms, int opt_linger, 
+WebServer::WebServer(int port, int trig_mode, int timeout_ms, bool opt_linger,
               std::string user, std::string password, std::string database_name, int sqlport, 
               int close_log, int sql_num, int thread_num, int log_que_size) : 
               _port(port), _opt_linger(opt_linger), _timeout_ms(timeout_ms), _is_close(false), _close_log(close_log), 
@@ -19,7 +19,7 @@ WebServer::WebServer(int port, int trig_mode, int timeout_ms, int opt_linger,
                   }
 
                   if (!_close_log) {
-                      Log::get_instance()->init(".log", 8192, 5000000, 50000);
+                      Log::get_instance()->init(".log", 5000000, 50000);
                       if (_is_close) {
                           LOG_ERROR("========== Server init error!==========");
                       }

@@ -23,7 +23,7 @@ Log::~Log() {
     }
 }
 
-bool Log::init(const char* file_name, int log_buf_size, int split_lines, int max_queue_size) {
+bool Log::init(const char* file_name, int split_lines, int max_queue_size) {
        if (max_queue_size > 0) {
            _isAsync = true;//异步
            if (!_deque) {
@@ -35,11 +35,8 @@ bool Log::init(const char* file_name, int log_buf_size, int split_lines, int max
            _isAsync = false;
        }
 
-        _buf_size = log_buf_size;
-        _buf = new char[_buf_size];
-        memset(_buf, '\0', _buf_size);
+       _line_count = 0;
         _split_lines = split_lines;
-        
 
        time_t timer = time(nullptr);
        struct tm* systime = localtime(&timer);
@@ -58,12 +55,21 @@ bool Log::init(const char* file_name, int log_buf_size, int split_lines, int max
        }
 
        _today = my_tm.tm_mday;
+        {
+            std::lock_guard<std::mutex> locker(_mutex);
+            _buff->retrieve_all();
+            if(_fp) {
+                flush();
+                fclose(_fp);
+            }
 
-        _fp = fopen(log_full_name, "a");
-        if (_fp == nullptr) {
-            return false;
+            _fp = fopen(log_full_name, "a");
+            if(_fp == nullptr) {
+                mkdir(_dir_name, 0777);
+                _fp = fopen(log_full_name, "a");
+            }
+            assert(_fp != nullptr);
         }
-        return true;
 }
 
 void Log::flush_log_thread() {
@@ -78,8 +84,10 @@ void Log::async_write() {
 }
 
 void Log::flush() {
-    std::lock_guard<std::mutex> locker(_mutex);
-    fflush(_fp);//刷新流 stream 的输出缓冲区。
+    if(_isAsync) {
+        _deque->flush();
+    }
+    fflush(_fp);
 }
 
 void Log::write_log(int level, const char* format, ...) {
@@ -128,36 +136,41 @@ void Log::write_log(int level, const char* format, ...) {
         }
 
         locker.lock();
-        flush();
-        fclose(_fp);
+        if (_fp) {
+            flush();
+            fclose(_fp);
+        }
         _fp = fopen(new_log, "a");
+        if (_fp == nullptr) {
+            mkdir(_dir_name, 0777);
+            _fp = fopen(new_log, "a");
+        }
         assert(_fp != nullptr);
     }
     
     va_list valst;
     va_start(valst, format);
-    std::string log_str;
 
     {
         std::lock_guard<std::mutex> locker(_mutex);
         _line_count++;
-        int n = snprintf(_buf, 48, "%d-%02d-%02d %02d-%02d-%02d.%06ld %s",
+        int n = snprintf(_buff->begin_write(), 128, "%d-%02d-%02d %02d-%02d-%02d.%06ld %s",
         my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_yday, my_tm.tm_hour, my_tm.tm_min, my_tm.tm_sec, now.tv_sec, s.c_str());
 
-        int m = vsnprintf(_buf + n, _buf_size - 1, format, valst); //写入可变参数format格式
+        _buff->has_written(n);
 
-        _buf[n + m] = '\n';
-        _buf[n + m + 1] = '\0';
+        int m = vsnprintf(_buff->begin_write(), _buff->writeable_bytes(), format, valst); //写入可变参数format格式
+        va_end(valst);
 
-        log_str = _buf; 
+        _buff->has_written(m);
+        _buff->append("\n\0", 2);
+
+        if (_isAsync && _deque && !_deque->full()) {
+            _deque->push_back(_buff->retrieve_alltostr());
+        }
+        else {
+            fputs(_buff->peek(), _fp);
+        }
+        _buff->retrieve_all();
     }
-    //异步日志则push到阻塞队列
-    if (_isAsync && !_deque->full()) {
-        _deque->push_back(log_str);
-    }
-    else {
-        std::lock_guard<std::mutex> locker(_mutex);
-        fputs(log_str.c_str(), _fp);
-    }
-    va_end(valst);
 }

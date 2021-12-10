@@ -20,27 +20,24 @@ public:
             _thread_array.emplace_back(
                 [this]
                 {
-                    std::unique_lock<std::mutex> locker(_mutex);
-                    for(;;) 
-                    {
-                        if (!this->_task_queue.empty()) {
-                            auto task = std::move(this->_task_queue.front());
+                    for (;;) {
+                        std::function<void()> task;
+                        {
+                            std::unique_lock<std::mutex> locker(this->_mutex);
+                            this->_cond.wait(locker, [this]{ return this->_close || !this->_task_queue.empty(); });
+                            if (this->_close && this->_task_queue.empty()) {
+                                return;
+                            }
+                            task = std::move(this->_task_queue.front());
                             this->_task_queue.pop();
-                            locker.unlock();
-                            task();
-                            locker.lock();
                         }
-                        else if (this->_close) {
-                            return;
-                        }
-                        else {
-                            this->_cond.wait(locker);
-                        }
+                        task();
                     }
                 }
             ); 
         } 
     }
+
     ~ThreadPool() {
         {
             std::unique_lock<std::mutex> locker(_mutex);
@@ -53,7 +50,7 @@ public:
         }
     }
     template <typename T>
-    bool AddTask(T&& task) {
+    void AddTask(T&& task) {
         {
             std::unique_lock<std::mutex> locker(_mutex);
             _task_queue.push(std::forward<T>(task));

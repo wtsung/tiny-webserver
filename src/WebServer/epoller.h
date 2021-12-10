@@ -24,4 +24,4 @@ private:
     std::vector<struct epoll_event> _events;
 };
 
-#endif WEBSERVER_EPOLLER_H
+#endif //WEBSERVER_EPOLLER_H

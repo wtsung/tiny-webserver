@@ -9,12 +9,13 @@
 #include <mutex>
 #include <memory>
 #include <ctime>
+#include <sys/stat.h>
 #include <cassert>
 #include <sys/time.h>
-
+#include "../Buffer/buffer.h"
 class Log {
 public:
-    bool init(const char* file_name, int log_buf_size = 8192, int split_lines = 5000000, int max_queue_size = 0);
+    void init(const char* file_name, int split_lines = 5000000, int max_queue_size = 0);
     static Log* get_instance() {
         static Log instance;
         return &instance;
@@ -38,9 +39,8 @@ private:
     bool _isAsync; //是否异步
     int _level;
     int _split_lines;
-    int _buf_size;
     int _today;
-    char* _buf;
+    std::unique_ptr<Buffer> _buff;
     
     char _log_name[128];
     char _dir_name[128];
