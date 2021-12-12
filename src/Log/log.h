@@ -40,7 +40,7 @@ private:
     int _level;
     int _split_lines;
     int _today;
-    std::unique_ptr<Buffer> _buff;
+    Buffer _buff;
     
     char _log_name[128];
     char _dir_name[128];

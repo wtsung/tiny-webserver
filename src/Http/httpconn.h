@@ -45,13 +45,13 @@ private:
     int _iov_count;
     struct iovec _iov[2];
 
-    std::unique_ptr<Buffer> _read_buff;
-    std::unique_ptr<Buffer> _write_buff;
+    Buffer _read_buff;
+    Buffer _write_buff;
 
 
 
-    std::unique_ptr<HttpRequest> _request;
-    std::unique_ptr<HttpResponse> _response;
+    HttpRequest _request;
+    HttpResponse _response;
 };
 
 

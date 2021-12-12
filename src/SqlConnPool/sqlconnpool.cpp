@@ -34,7 +34,7 @@ void SqlConnPool::Init(std::string url, std::string user, std::string password, 
     for (int i = 0; i < maxconn; ++i) {
         MYSQL* sql = nullptr;
         sql = mysql_init(sql);
-        if (!sql) {
+        if (sql == nullptr) {
             if (!_close_log) {
                 LOG_ERROR("Mysql init error!");
             }
@@ -43,7 +43,7 @@ void SqlConnPool::Init(std::string url, std::string user, std::string password, 
         //登录连接sql
         sql = mysql_real_connect(sql, url.c_str(), user.c_str(), password.c_str(), databasename.c_str(), port, nullptr, 0);
 
-        if (!sql) {
+        if (sql == nullptr) {
             if (!_close_log) {
                 LOG_ERROR("Mysql connect error!");
             }

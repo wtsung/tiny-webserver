@@ -19,14 +19,14 @@ void HttpConn::init(int sockfd, const sockaddr_in& addr) {
     _user_count++;
     _addr = addr;
     _sockfd = sockfd;
-    _read_buff->retrieve_all();
-    _write_buff->retrieve_all();
+    _read_buff.retrieve_all();
+    _write_buff.retrieve_all();
     _close = false;
     LOG_INFO("Client[%d](%s:%d) in, UserCount: %d", _sockfd, this->get_ip(), this->get_port(), (int)_user_count);
 }
 
 void HttpConn::close_conn() {
-    _response->unmap_file();
+    _response.unmap_file();
     if (_close == false) {
         _close = true;
         _user_count--;
@@ -54,7 +54,7 @@ int HttpConn::get_port() const {
 ssize_t HttpConn::read(int* save_errno) {
     ssize_t len = -1;
     do {
-        len = _read_buff->read_fd(_sockfd, save_errno);
+        len = _read_buff.read_fd(_sockfd, save_errno);
         if (len < 0) {
             break;
         }
@@ -78,44 +78,44 @@ ssize_t HttpConn::write(int* save_errno) {
             _iov[1].iov_base = (uint8_t*) _iov[1].iov_base + (len - _iov[0].iov_len);
             _iov[1].iov_len -= (len - _iov[0].iov_len);
             if (_iov[0].iov_len) {
-                _write_buff->retrieve_all();
+                _write_buff.retrieve_all();
                 _iov[0].iov_len = 0;
             }
         }
         else {
             _iov[0].iov_base = (uint8_t*)_iov[0].iov_base + len;
             _iov[0].iov_len -= len;
-            _write_buff->retrieve(len);
+            _write_buff.retrieve(len);
         }
     } while (_trig_ET || this->write_bytes() > 10240);
     return len;
 }
 
 bool HttpConn::process() {
-    _request->init();
-    if (_read_buff->readable_bytes() <= 0) {
+    _request.init();
+    if (_read_buff.readable_bytes() <= 0) {
         return false;
     }
-    else if (_request->parse(*_read_buff.get())) {
+    else if (_request.parse(_read_buff)) {
         LOG_DEBUG("%s", _request->path().c_str());
-        _response->init(_root_dir, _request->path(), this->is_keepalive(), 200);
+        _response.init(_root_dir, _request.path(), this->is_keepalive(), 200);
     }
     else {
-        _response->init(_root_dir, _request->path(), false, 400);
+        _response.init(_root_dir, _request.path(), false, 400);
     }
-    _response->make_response(*_write_buff.get());
+    _response.make_response(_write_buff);
     //响应头，在buff中
-    _iov[0].iov_base = const_cast<char*> (_write_buff->peek());
-    _iov[0].iov_len = _write_buff->readable_bytes();
+    _iov[0].iov_base = const_cast<char*> (_write_buff.peek());
+    _iov[0].iov_len = _write_buff.readable_bytes();
     _iov_count = 1;
 
     //文件
-    if (_response->file_len() > 0 && _response->file()) {
-        _iov[1].iov_base = _response->file();
-        _iov[1].iov_len = _response->file_len();
+    if (_response.file_len() > 0 && _response.file()) {
+        _iov[1].iov_base = _response.file();
+        _iov[1].iov_len = _response.file_len();
         _iov_count = 2;
     }
-    LOG_DEBUG("filesize:%d, %d  to %d", _response->file_len() , _iov_count, write_bytes());////
+    LOG_DEBUG("filesize:%d, %d  to %d", _response.file_len() , _iov_count, write_bytes());////
     return true;
 }
 
@@ -124,6 +124,6 @@ int HttpConn::write_bytes() {
 }
     
 bool HttpConn::is_keepalive() const {
-    return _request->is_keepAlive();
+    return _request.is_keepAlive();
 }
 

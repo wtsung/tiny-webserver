@@ -11,6 +11,7 @@ WebServer::WebServer(int port, int trig_mode, int timeout_ms, bool opt_linger,
                   strncat(_root_dir, "/resourse/", 16);
                   HttpConn::_user_count = 0;
                   HttpConn::_root_dir = _root_dir;
+                  //127.0.0.1
                   SqlConnPool::GetInstance()->Init("localhost", user, password, database_name, sqlport, sql_num, close_log);
 
                   _init_event_mode(trig_mode);

@@ -36,7 +36,7 @@ void Log::init(const char* file_name, int split_lines, int max_queue_size) {
        }
 
        _line_count = 0;
-        _split_lines = split_lines;
+       _split_lines = split_lines;
 
        time_t timer = time(nullptr);
        struct tm* systime = localtime(&timer);
@@ -57,7 +57,7 @@ void Log::init(const char* file_name, int split_lines, int max_queue_size) {
        _today = my_tm.tm_mday;
         {
             std::lock_guard<std::mutex> locker(_mutex);
-            _buff->retrieve_all();
+            _buff.retrieve_all();
             if(_fp) {
                 flush();
                 fclose(_fp);
@@ -75,6 +75,7 @@ void Log::init(const char* file_name, int split_lines, int max_queue_size) {
 void Log::flush_log_thread() {
     Log::get_instance()->async_write();
 }
+
 void Log::async_write() {
     std::string single_log;
     while (_deque->pop(single_log)) {
@@ -149,28 +150,28 @@ void Log::write_log(int level, const char* format, ...) {
     }
     
     va_list valst;
-    va_start(valst, format);
 
     {
         std::lock_guard<std::mutex> locker(_mutex);
         _line_count++;
-        int n = snprintf(_buff->begin_write(), 128, "%d-%02d-%02d %02d-%02d-%02d.%06ld %s",
+        int n = snprintf(_buff.begin_write(), 128, "%d-%02d-%02d %02d-%02d-%02d.%06ld %s",
         my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_yday, my_tm.tm_hour, my_tm.tm_min, my_tm.tm_sec, now.tv_sec, s.c_str());
 
-        _buff->has_written(n);
+        _buff.has_written(n);
 
-        int m = vsnprintf(_buff->begin_write(), _buff->writeable_bytes(), format, valst); //写入可变参数format格式
+        va_start(valst, format);
+        int m = vsnprintf(_buff.begin_write(), _buff.writeable_bytes(), format, valst); //写入可变参数format格式
         va_end(valst);
 
-        _buff->has_written(m);
-        _buff->append("\n\0", 2);
+        _buff.has_written(m);
+        _buff.append("\n\0", 2);
 
         if (_isAsync && _deque && !_deque->full()) {
-            _deque->push_back(_buff->retrieve_alltostr());
+            _deque->push_back(_buff.retrieve_alltostr());
         }
         else {
-            fputs(_buff->peek(), _fp);
+            fputs(_buff.peek(), _fp);
         }
-        _buff->retrieve_all();
+        _buff.retrieve_all();
     }
 }

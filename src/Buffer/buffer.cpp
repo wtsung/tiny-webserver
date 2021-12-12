@@ -56,7 +56,7 @@ const char* Buffer::begin_write_const() const {
 }
 
 char* Buffer::begin_write() {
-    return this->_begin_ptr() + _write_pos;
+    return _begin_ptr() + _write_pos;
 }
 
 void Buffer::append(const std::string& str) {
