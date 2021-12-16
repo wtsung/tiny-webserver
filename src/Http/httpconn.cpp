@@ -97,7 +97,7 @@ bool HttpConn::process() {
         return false;
     }
     else if (_request.parse(_read_buff)) {
-        LOG_DEBUG("%s", _request->path().c_str());
+        LOG_DEBUG("%s", _request.path().c_str());
         _response.init(_root_dir, _request.path(), this->is_keepalive(), 200);
     }
     else {

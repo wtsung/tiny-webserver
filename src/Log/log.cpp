@@ -46,16 +46,17 @@ void Log::init(const char* file_name, int split_lines, int max_queue_size) {
        char log_full_name[256] = {0};
 
        if (p == nullptr) {
-           snprintf(log_full_name, 255, "%d_%02d_%02d_%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
+           strcpy(_log_name, file_name);
+           snprintf(log_full_name, 255, "%d_%02d_%02d%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
        }
        else {
            strcpy(_log_name, p + 1);
            strncpy(_dir_name, file_name, p - file_name + 1);
-           snprintf(log_full_name, 255, "%s%d_%02d_%02d_%s", _dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, _log_name);
+           snprintf(log_full_name, 255, "%s%d_%02d_%02d%s", _dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, _log_name);
        }
-
+       
        _today = my_tm.tm_mday;
-        {
+       {
             std::lock_guard<std::mutex> locker(_mutex);
             _buff.retrieve_all();
             if(_fp) {
@@ -118,7 +119,7 @@ void Log::write_log(int level, const char* format, ...) {
     }
 
     //新建新的日志文件
-    if (_today != my_tm.tm_mday || (_line_count && (_line_count % _max_lines == 0))) {
+    if (_today != my_tm.tm_mday || (_line_count && (_line_count % _split_lines == 0))) {
         std::unique_lock<std::mutex> locker(_mutex);
         locker.unlock();
 

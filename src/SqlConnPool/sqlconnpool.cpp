@@ -26,27 +26,21 @@ SqlConnPool* SqlConnPool::GetInstance() {
     return &connPool;
 }
 
-void SqlConnPool::Init(std::string url, std::string user, std::string password, std::string databasename, int port,
-                       int maxconn, int closelog) {
+void SqlConnPool::Init(std::string url, std::string user, std::string password, std::string databasename, int port, int maxconn) {
     assert(maxconn > 0);
-    _close_log = closelog;
     _max_conn = maxconn;
     for (int i = 0; i < maxconn; ++i) {
         MYSQL* sql = nullptr;
         sql = mysql_init(sql);
         if (sql == nullptr) {
-            if (!_close_log) {
-                LOG_ERROR("Mysql init error!");
-            }
+            LOG_ERROR("Mysql init error!");
             assert(sql);
         }
         //登录连接sql
         sql = mysql_real_connect(sql, url.c_str(), user.c_str(), password.c_str(), databasename.c_str(), port, nullptr, 0);
 
         if (sql == nullptr) {
-            if (!_close_log) {
-                LOG_ERROR("Mysql connect error!");
-            }
+            LOG_ERROR("Mysql connect error!");
             assert(sql);
         }
 

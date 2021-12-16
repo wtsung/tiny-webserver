@@ -32,9 +32,6 @@ private:
 
     void async_write();
 
-    static const int MAX_LINES = 50000;
-
-    int _max_lines;
     int _line_count;
     bool _isAsync; //是否异步
     int _level;

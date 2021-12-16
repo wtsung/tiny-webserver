@@ -16,7 +16,7 @@ public:
 
     static SqlConnPool* GetInstance();
 
-    void Init(std::string url, std::string user, std::string password, std::string databasename, int port, int maxconn, int closelog = 0);
+    void Init(std::string url, std::string user, std::string password, std::string databasename, int port, int maxconn);
     void ClosePool();
 private:
     SqlConnPool();
@@ -29,7 +29,6 @@ private:
     std::queue<MYSQL*> _conn_queue;
     sem_t _sem;
 
-    int _close_log;
 };
 
 #endif //WEBSERVER_SQLCONNPOOL_H

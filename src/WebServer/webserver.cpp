@@ -2,8 +2,8 @@
 
 WebServer::WebServer(int port, int trig_mode, int timeout_ms, bool opt_linger,
               std::string user, std::string password, std::string database_name, int sqlport, 
-              int close_log, int sql_num, int thread_num, int log_que_size) : 
-              _port(port), _opt_linger(opt_linger), _timeout_ms(timeout_ms), _is_close(false), _close_log(close_log), 
+              int sql_num, int thread_num, int log_que_size) : 
+              _port(port), _opt_linger(opt_linger), _timeout_ms(timeout_ms), _is_close(false), 
               _timer(new time_heap()), _threadpool(new ThreadPool(thread_num)), _epoller(new Epoller())
               {
                   _root_dir = getcwd(nullptr, 256);
@@ -11,27 +11,21 @@ WebServer::WebServer(int port, int trig_mode, int timeout_ms, bool opt_linger,
                   strncat(_root_dir, "/resourse/", 16);
                   HttpConn::_user_count = 0;
                   HttpConn::_root_dir = _root_dir;
-                  //127.0.0.1
-                  SqlConnPool::GetInstance()->Init("localhost", user, password, database_name, sqlport, sql_num, close_log);
-
+                  SqlConnPool::GetInstance()->Init("localhost", user, password, database_name, sqlport, sql_num);
+                  Log::get_instance()->init(".log", 5000000, 50000);
+                  LOG_INFO("========== Server init begin ==========");
                   _init_event_mode(trig_mode);
                   if (!_init_socket()) {
                       _is_close = true;
                   }
-
-                  if (!_close_log) {
-                      Log::get_instance()->init(".log", 5000000, 50000);
-                      if (_is_close) {
-                          LOG_ERROR("========== Server init error!==========");
-                      }
-                      else {
-                          LOG_INFO("========== Server init ==========");
-                          LOG_INFO("Port:%d, OpenLinger: %s", _port, _opt_linger ? "true":"false");
-                          LOG_INFO("Listen Mode: %s, OpenConn Mode: %s", (_listen_event & EPOLLET ? "ET": "LT"), (_conn_event & EPOLLET ? "ET": "LT"));
-                          LOG_INFO("rootDir: %s", HttpConn::_root_dir);
-                          LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", sql_num, thread_num);
-                      }
-
+                  if (_is_close) {
+                      LOG_ERROR("========== Server init error!==========");
+                  }
+                  else {
+                      LOG_INFO("OpenLinger: %s", _opt_linger ? "true":"false");
+                      LOG_INFO("Listen Mode: %s, OpenConn Mode: %s", (_listen_event & EPOLLET ? "ET": "LT"), (_conn_event & EPOLLET ? "ET": "LT"));
+                      LOG_INFO("rootDir: %s", _root_dir);
+                      LOG_INFO("SqlConnPool num: %d, ThreadPool num: %d", sql_num, thread_num);
                   }
               }
             

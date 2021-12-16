@@ -2,6 +2,14 @@
 #define WEBSERVER_WEBSERVER_H
 #include <string>
 #include <memory>
+#include <unordered_map>
+#include <fcntl.h>       // fcntl()
+#include <unistd.h>      // close()
+#include <assert.h>
+#include <errno.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "epoller.h"
 #include "../Timer/timer.h"
@@ -15,7 +23,7 @@ class WebServer {
 public:
     WebServer(int port, int trig_mode, int timeout_ms, bool opt_linger,
               std::string user, std::string password, std::string database_name, int sqlport, 
-              int close_log, int sql_num, int thread_num, int log_que_size);
+              int sql_num, int thread_num, int log_que_size);
     ~WebServer();
 
     void start();
@@ -47,7 +55,6 @@ private:
     bool _is_close;
     int _listenfd;
     char* _root_dir;
-    int _close_log;
 
     int _epollfd;
 
